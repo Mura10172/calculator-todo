@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>計算機</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    display: flex; justify-content: center; align-items: center;
+    min-height: 100vh; background: #1a1a2e; font-family: 'Segoe UI', sans-serif;
+  }
+  .calculator {
+    background: #16213e; border-radius: 16px; padding: 24px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4); width: 320px;
+  }
+  .display {
+    background: #0f3460; border-radius: 12px; padding: 16px 20px;
+    margin-bottom: 20px; text-align: right; min-height: 80px;
+    display: flex; flex-direction: column; justify-content: flex-end;
+  }
+  .display .expression { color: #7f8c9b; font-size: 14px; min-height: 20px; }
+  .display .result { color: #e6e6e6; font-size: 32px; font-weight: 600; word-break: break-all; }
+  .buttons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  button {
+    padding: 18px; font-size: 20px; border: none; border-radius: 10px;
+    cursor: pointer; transition: background 0.15s, transform 0.1s;
+    font-weight: 500;
+  }
+  button:active { transform: scale(0.95); }
+  .btn-num { background: #1a1a40; color: #e6e6e6; }
+  .btn-num:hover { background: #2a2a50; }
+  .btn-op { background: #e94560; color: #fff; }
+  .btn-op:hover { background: #ff6b81; }
+  .btn-func { background: #533483; color: #e6e6e6; }
+  .btn-func:hover { background: #6a4c9c; }
+  .btn-eq { background: #0f3460; color: #e6e6e6; }
+  .btn-eq:hover { background: #1a4a7a; }
+  .btn-zero { grid-column: span 2; }
+</style>
+</head>
+<body>
+
+<div class="calculator">
+  <div class="display">
+    <div class="expression" id="expression"></div>
+    <div class="result" id="result">0</div>
+  </div>
+  <div class="buttons">
+    <button class="btn-func" onclick="clearAll()">C</button>
+    <button class="btn-func" onclick="toggleSign()">±</button>
+    <button class="btn-func" onclick="inputPercent()">%</button>
+    <button class="btn-op" onclick="inputOp('÷')">÷</button>
+
+    <button class="btn-num" onclick="inputNum('7')">7</button>
+    <button class="btn-num" onclick="inputNum('8')">8</button>
+    <button class="btn-num" onclick="inputNum('9')">9</button>
+    <button class="btn-op" onclick="inputOp('×')">×</button>
+
+    <button class="btn-num" onclick="inputNum('4')">4</button>
+    <button class="btn-num" onclick="inputNum('5')">5</button>
+    <button class="btn-num" onclick="inputNum('6')">6</button>
+    <button class="btn-op" onclick="inputOp('-')">−</button>
+
+    <button class="btn-num" onclick="inputNum('1')">1</button>
+    <button class="btn-num" onclick="inputNum('2')">2</button>
+    <button class="btn-num" onclick="inputNum('3')">3</button>
+    <button class="btn-op" onclick="inputOp('+')">+</button>
+
+    <button class="btn-num btn-zero" onclick="inputNum('0')">0</button>
+    <button class="btn-num" onclick="inputDot()">.</button>
+    <button class="btn-eq" onclick="calculate()">=</button>
+  </div>
+</div>
+
+<script>
+  let current = '0';
+  let previous = '';
+  let operator = '';
+  let resetNext = false;
+
+  const $result = document.getElementById('result');
+  const $expr = document.getElementById('expression');
+
+  function updateDisplay() {
+    $result.textContent = current;
+  }
+
+  function inputNum(n) {
+    if (resetNext) { current = '0'; resetNext = false; }
+    if (current === '0' && n !== '0') current = n;
+    else if (current === '0' && n === '0') return;
+    else current += n;
+    updateDisplay();
+  }
+
+  function inputDot() {
+    if (resetNext) { current = '0'; resetNext = false; }
+    if (!current.includes('.')) current += '.';
+    updateDisplay();
+  }
+
+  function inputOp(op) {
+    if (operator && !resetNext) calculate();
+    previous = current;
+    operator = op;
+    $expr.textContent = previous + ' ' + operator;
+    resetNext = true;
+  }
+
+  function calculate() {
+    if (!operator || resetNext) return;
+    const a = parseFloat(previous);
+    const b = parseFloat(current);
+    let r;
+    switch (operator) {
+      case '+': r = a + b; break;
+      case '-': r = a - b; break;
+      case '×': r = a * b; break;
+      case '÷': r = b !== 0 ? a / b : 'エラー'; break;
+    }
+    $expr.textContent = previous + ' ' + operator + ' ' + current + ' =';
+    current = typeof r === 'number' ? String(Math.round(r * 1e12) / 1e12) : r;
+    operator = '';
+    previous = '';
+    resetNext = true;
+    updateDisplay();
+  }
+
+  function clearAll() {
+    current = '0'; previous = ''; operator = '';
+    resetNext = false;
+    $expr.textContent = '';
+    updateDisplay();
+  }
+
+  function toggleSign() {
+    if (current !== '0') {
+      current = current.startsWith('-') ? current.slice(1) : '-' + current;
+      updateDisplay();
+    }
+  }
+
+  function inputPercent() {
+    current = String(parseFloat(current) / 100);
+    updateDisplay();
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key >= '0' && e.key <= '9') inputNum(e.key);
+    else if (e.key === '.') inputDot();
+    else if (e.key === '+') inputOp('+');
+    else if (e.key === '-') inputOp('-');
+    else if (e.key === '*') inputOp('×');
+    else if (e.key === '/') { e.preventDefault(); inputOp('÷'); }
+    else if (e.key === 'Enter' || e.key === '=') calculate();
+    else if (e.key === 'Escape') clearAll();
+    else if (e.key === '%') inputPercent();
+  });
+</script>
+</body>
+</html>
